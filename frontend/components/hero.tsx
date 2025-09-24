@@ -43,7 +43,7 @@ export function Hero() {
     console.log("Payload being sent:", JSON.stringify(payload, null, 2))
 
     try {
-      const res = await fetch("http://127.0.0.1:8080/formats", {
+      const res = await fetch("https://api.hdvideodownload.xyz/formats", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
