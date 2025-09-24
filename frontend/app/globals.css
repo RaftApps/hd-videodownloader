@@ -1,0 +1,215 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Updated color scheme for pink/reddish light theme */
+  --background: oklch(0.98 0.01 350);
+  --foreground: oklch(0.15 0.02 350);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0.02 350);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.02 350);
+  --primary: oklch(0.55 0.18 350);
+  --primary-foreground: oklch(0.98 0.01 350);
+  --secondary: oklch(0.95 0.02 350);
+  --secondary-foreground: oklch(0.15 0.02 350);
+  --muted: oklch(0.95 0.02 350);
+  --muted-foreground: oklch(0.45 0.02 350);
+  --accent: oklch(0.95 0.02 350);
+  --accent-foreground: oklch(0.15 0.02 350);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.98 0.01 350);
+  --border: oklch(0.9 0.01 350);
+  --input: oklch(0.9 0.01 350);
+  --ring: oklch(0.55 0.18 350);
+  --chart-1: oklch(0.55 0.18 350);
+  --chart-2: oklch(0.6 0.15 320);
+  --chart-3: oklch(0.65 0.12 300);
+  --chart-4: oklch(0.7 0.16 280);
+  --chart-5: oklch(0.75 0.18 260);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.98 0.01 350);
+  --sidebar-foreground: oklch(0.15 0.02 350);
+  --sidebar-primary: oklch(0.55 0.18 350);
+  --sidebar-primary-foreground: oklch(0.98 0.01 350);
+  --sidebar-accent: oklch(0.95 0.02 350);
+  --sidebar-accent-foreground: oklch(0.15 0.02 350);
+  --sidebar-border: oklch(0.9 0.01 350);
+  --sidebar-ring: oklch(0.55 0.18 350);
+}
+
+/* Removed dark theme variables since we're going light-only */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Updated glass effects for pink light theme */
+.liquid-glass {
+  background: rgba(255, 240, 245, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 182, 193, 0.4);
+  box-shadow: 0 4px 16px rgba(219, 112, 147, 0.1), inset 0 1px 0 rgba(255, 240, 245, 0.9);
+}
+
+.liquid-glass-enhanced {
+  background: rgba(255, 240, 245, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 182, 193, 0.5);
+  box-shadow: 0 8px 24px rgba(219, 112, 147, 0.15), inset 0 1px 0 rgba(255, 240, 245, 1);
+}
+
+.liquid-glass-header {
+  background: rgba(255, 240, 245, 0.6);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 182, 193, 0.3);
+  box-shadow: 0 2px 12px rgba(219, 112, 147, 0.08), inset 0 1px 0 rgba(255, 240, 245, 0.8);
+}
+
+/* Updated glass border utilities for pink theme */
+.glass-border {
+  border: 1px solid rgba(255, 182, 193, 0.4);
+  background: rgba(255, 240, 245, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 4px 16px rgba(219, 112, 147, 0.1), inset 0 1px 0 rgba(255, 240, 245, 0.9);
+}
+
+.glass-border-enhanced {
+  border: 1px solid rgba(255, 182, 193, 0.5);
+  background: rgba(255, 240, 245, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 8px 24px rgba(219, 112, 147, 0.15), inset 0 1px 0 rgba(255, 240, 245, 1);
+}
+
+.glass-border-subtle {
+  border: 1px solid rgba(255, 182, 193, 0.3);
+  background: rgba(255, 240, 245, 0.5);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 2px 8px rgba(219, 112, 147, 0.06), inset 0 1px 0 rgba(255, 240, 245, 0.7);
+}
+
+/* Updated hover effects for pink theme */
+.glass-border:hover {
+  filter: drop-shadow(0 0 2px rgba(219, 112, 147, 0.3)) drop-shadow(1px 0 2px rgba(255, 20, 147, 0.2))
+    drop-shadow(-1px 0 2px rgba(199, 21, 133, 0.15));
+}
+
+.glass-border-enhanced:hover {
+  filter: drop-shadow(0 0 3px rgba(219, 112, 147, 0.4)) drop-shadow(1px 0 3px rgba(255, 20, 147, 0.25))
+    drop-shadow(-1px 0 3px rgba(199, 21, 133, 0.2));
+}
+
+.glass-border-subtle:hover {
+  filter: drop-shadow(0 0 1px rgba(219, 112, 147, 0.2)) drop-shadow(0.5px 0 1px rgba(255, 20, 147, 0.15))
+    drop-shadow(-0.5px 0 1px rgba(199, 21, 133, 0.1));
+}
+
+/* Logo Marquee Animations - Seamless Infinite Loop */
+@keyframes scroll-right {
+  0% {
+    transform: translateX(-33.333%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-33.333%);
+  }
+}
+
+.animate-scroll-right {
+  animation: scroll-right 45s linear infinite;
+}
+
+.animate-scroll-left {
+  animation: scroll-left 45s linear infinite;
+}
+
+/* Hide v0 preview badge (preview-only; not present in production) */
+a[aria-label="Built with v0"],
+a[title="Built with v0"],
+a[href*="v0.dev"].v0-badge,
+a[data-built-with-v0],
+#built-with-v0,
+.v0-built-with {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Extra-aggressive hide for any "Built with v0" or "made with v0" preview badge */
+[aria-label*="v0" i],
+[title*="v0" i],
+[id*="v0" i],
+[class*="v0" i],
+a[href*="v0.dev"],
+a[href*="v0.sh"],
+a[href*="v0.app"],
+a[href*="v0.dev"] *,
+.v0,
+.v0-badge,
+.v0-sticky,
+.v0-watermark,
+.v0-floating-badge,
+.v0-built-with,
+.built-with-v0,
+.built_with_v0,
+[data-built-with="v0"],
+[data-built-with*="v0" i] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
