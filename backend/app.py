@@ -1,10 +1,10 @@
 import os
+import json
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from cookie_refresher import start_auto_refresh
 import re
-
 from pydantic import BaseModel
 import yt_dlp
 import instaloader
@@ -126,9 +126,11 @@ def get_formats_yt(url: str):
 },
         }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        cookies_path = os.path.join(os.path.dirname(__file__), "cookies.json")
-        if os.path.exists(cookies_path):
-            ydl_opts["cookiefile"] = cookies_path
+        cookies_json = os.path.join(os.path.dirname(__file__), "cookies.json")
+        cookies_txt = os.path.join(os.path.dirname(__file__), "cookies.txt")
+        if os.path.exists(cookies_json):
+            convert_json_to_netscape(cookies_json, cookies_txt)
+        ydl_opts["cookiefile"] = cookies_txt
         info = ydl.extract_info(url, download=False)
         progressive, video_only, audio_only, others = [], [], [], []
         for f in info.get("formats", []):
@@ -163,6 +165,23 @@ def get_formats_yt(url: str):
             "others": others
         }
 
+
+def convert_json_to_netscape(json_file, txt_file):
+    with open(json_file, "r") as f:
+        cookies = json.load(f)
+
+    with open(txt_file, "w") as f:
+        f.write("# Netscape HTTP Cookie File\n")
+        f.write("# This file is generated automatically.\n")
+        for c in cookies:
+            domain = c.get("domain", "")
+            flag = "TRUE" if domain.startswith(".") else "FALSE"
+            path = c.get("path", "/")
+            secure = "TRUE" if c.get("secure") else "FALSE"
+            expiration = str(c.get("expirationDate", "0")).split(".")[0]
+            name = c.get("name", "")
+            value = c.get("value", "")
+            f.write("\t".join([domain, flag, path, secure, expiration, name, value]) + "\n")
 
 def get_formats_instagram(url: str):
     try:
