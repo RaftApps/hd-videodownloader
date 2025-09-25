@@ -98,7 +98,8 @@ def get_formats_yt(url: str):
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
                 "Chrome/91.0.4472.124 Safari/537.36"
             )
-        }
+        },
+        "cookiesfrombrowser": ("chrome",),  # or ("firefox",)
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
