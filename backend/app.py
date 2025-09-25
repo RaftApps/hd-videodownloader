@@ -159,9 +159,6 @@ def get_formats_yt(url: str):
             "others": others
         }
 
-import instaloader
-
-import instaloader
 
 def get_formats_instagram(url: str):
     try:
