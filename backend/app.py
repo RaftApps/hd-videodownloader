@@ -248,7 +248,7 @@ async def playlist_formats(
     task_id = str(uuid.uuid4())
     tasks_progress[task_id] = {"total": 0, "completed": 0, "results": [], "errors": [], "status": "running"}
 
-    ydl_opts = {"quiet": True, "no_warnings": True}
+    ydl_opts = {}
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(req.url, download=False)
         entries = info.get("entries", [])
