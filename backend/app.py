@@ -88,17 +88,39 @@ def detect_platform(url: str):
 # ----------------------------
 # Main format extraction
 # ----------------------------
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/140.0.0.0 Mobile Safari/537.36"
+    ),
+    "Referer": "https://ssvid.net/",
+    "Sec-CH-UA": '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',
+    "Sec-CH-UA-Mobile": "?1",
+    "Sec-CH-UA-Platform": '"Android"',
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept": "*/*",
+    "Connection": "keep-alive",
+}
+
 def get_formats_yt(url: str):
     ydl_opts = {
         "quiet": True,
         "no_warnings": True,
-        "http_headers": {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/91.0.4472.124 Safari/537.36"
-            )
-        },
+        "http_headers":{
+    "User-Agent": (
+        "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/140.0.0.0 Mobile Safari/537.36"
+    ),
+    "Referer": "https://ssvid.net/",
+    "Sec-CH-UA": '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',
+    "Sec-CH-UA-Mobile": "?1",
+    "Sec-CH-UA-Platform": '"Android"',
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept": "*/*",
+    "Connection": "keep-alive",
+},
         "cookiesfrombrowser": ("chrome",),  # or ("firefox",)
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
