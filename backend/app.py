@@ -121,8 +121,7 @@ def get_formats_yt(url: str):
     "Accept": "*/*",
     "Connection": "keep-alive",
 },
-        "cookiesfrombrowser": ("chrome",),  # or ("firefox",)
-    }
+        }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
         progressive, video_only, audio_only, others = [], [], [], []
