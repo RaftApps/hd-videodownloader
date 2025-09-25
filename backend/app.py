@@ -1,12 +1,16 @@
+import os
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from cookie_refresher import start_auto_refresh
 import re
 
 from pydantic import BaseModel
 import yt_dlp
 import instaloader
 import uuid
+
+start_auto_refresh(interval_minutes=30)
 
 app = FastAPI(title="Universal Downloader API", version="0.0.2")
 
@@ -113,7 +117,6 @@ def get_formats_yt(url: str):
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/140.0.0.0 Mobile Safari/537.36"
     ),
-    "Referer": "https://ssvid.net/",
     "Sec-CH-UA": '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',
     "Sec-CH-UA-Mobile": "?1",
     "Sec-CH-UA-Platform": '"Android"',
@@ -123,9 +126,11 @@ def get_formats_yt(url: str):
 },
         }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        cookies_path = os.path.join(os.path.dirname(__file__), "cookies.json")
+        if os.path.exists(cookies_path):
+            ydl_opts["cookiefile"] = cookies_path
         info = ydl.extract_info(url, download=False)
         progressive, video_only, audio_only, others = [], [], [], []
-
         for f in info.get("formats", []):
             vcodec, acodec = f.get("vcodec"), f.get("acodec")
             fmt = {
