@@ -9,8 +9,6 @@ import yt_dlp
 import instaloader
 import uuid
 
-start_auto_refresh(interval_minutes=30)
-
 app = FastAPI(title="Universal Downloader API", version="0.0.2")
 
 API_KEY = "my-secret-key-hdx"  # change this to your own
