@@ -119,6 +119,7 @@ def get_formats_yt(url: str):
                 "Chrome/91.0.4472.124 Safari/537.36"
             )
         }
+    }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
         progressive, video_only, audio_only, others = [], [], [], []
