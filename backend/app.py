@@ -1,12 +1,15 @@
+import os
+import json
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import re
-
 from pydantic import BaseModel
 import yt_dlp
 import instaloader
 import uuid
+
+start_auto_refresh(interval_minutes=30)
 
 app = FastAPI(title="Universal Downloader API", version="0.0.2")
 
@@ -88,6 +91,21 @@ def detect_platform(url: str):
 # ----------------------------
 # Main format extraction
 # ----------------------------
+# HEADERS = {
+#     "User-Agent": (
+#         "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) "
+#         "AppleWebKit/537.36 (KHTML, like Gecko) "
+#         "Chrome/140.0.0.0 Mobile Safari/537.36"
+#     ),
+#     "Referer": "https://ssvid.net/",
+#     "Sec-CH-UA": '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',
+#     "Sec-CH-UA-Mobile": "?1",
+#     "Sec-CH-UA-Platform": '"Android"',
+#     "Accept-Language": "en-US,en;q=0.9",
+#     "Accept": "*/*",
+#     "Connection": "keep-alive",
+# }
+
 def get_formats_yt(url: str):
     ydl_opts = {
         "quiet": True,
@@ -101,11 +119,9 @@ def get_formats_yt(url: str):
                 "Chrome/91.0.4472.124 Safari/537.36"
             )
         }
-    }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
         progressive, video_only, audio_only, others = [], [], [], []
-
         for f in info.get("formats", []):
             vcodec, acodec = f.get("vcodec"), f.get("acodec")
             fmt = {
@@ -137,6 +153,24 @@ def get_formats_yt(url: str):
             "audio_only": audio_only,
             "others": others
         }
+
+
+def convert_json_to_netscape(json_file, txt_file):
+    with open(json_file, "r") as f:
+        cookies = json.load(f)
+
+    with open(txt_file, "w") as f:
+        f.write("# Netscape HTTP Cookie File\n")
+        f.write("# This file is generated automatically.\n")
+        for c in cookies:
+            domain = c.get("domain", "")
+            flag = "TRUE" if domain.startswith(".") else "FALSE"
+            path = c.get("path", "/")
+            secure = "TRUE" if c.get("secure") else "FALSE"
+            expiration = str(c.get("expirationDate", "0")).split(".")[0]
+            name = c.get("name", "")
+            value = c.get("value", "")
+            f.write("\t".join([domain, flag, path, secure, expiration, name, value]) + "\n")
 
 def get_formats_instagram(url: str):
     try:
