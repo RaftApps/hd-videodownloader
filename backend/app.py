@@ -92,6 +92,7 @@ def get_formats_yt(url: str):
     ydl_opts = {
         "quiet": True,
         "no_warnings": True,
+        "cookiefile": "youtube_cookies.txt", 
         "http_headers": {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
