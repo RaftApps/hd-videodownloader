@@ -2,7 +2,6 @@ import os
 import json
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.responses import JSONResponse
-import tldextract
 from fastapi.middleware.cors import CORSMiddleware
 from cookie_refresher import start_auto_refresh
 import re
@@ -26,35 +25,6 @@ app.add_middleware(
 )
 
 tasks_progress = {}  # in-memory progress tracker
-
-app = FastAPI()
-
-BLOCKLIST_URL = "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
-
-def load_blocklist():
-    """
-    Download and parse the blocklist into a Python set.
-    """
-    response = requests.get(BLOCKLIST_URL, timeout=10)
-    response.raise_for_status()
-    
-    blocklist = set()
-    for line in response.text.splitlines():
-        if line.startswith("0.0.0.0"):
-            parts = line.split()
-            if len(parts) > 1:
-                blocklist.add(parts[1].lower())
-    return blocklist
-
-# Load blocklist once
-ADULT_BLOCKLIST = load_blocklist()
-
-def is_adult_url(url: str) -> bool:
-    """
-    Check if a URL belongs to a blocked site.
-    """
-    domain = tldextract.extract(url).registered_domain.lower()
-    return domain in ADULT_BLOCKLIST
 
 # ----------------------------
 # Models
@@ -96,9 +66,7 @@ def verify_api_key(key: str | None):
 
 def detect_platform(url: str):
     url = url.lower()
-    if is_adult_url(url):
-        raise HTTPException(status_code=403, detail="🚫 Adult websites are blocked by policy")
-    elif "youtube.com" in url or "youtu.be" in url:
+    if "youtube.com" in url or "youtu.be" in url:
         return "youtube"
     elif "instagram.com" in url:
         return "instagram"
