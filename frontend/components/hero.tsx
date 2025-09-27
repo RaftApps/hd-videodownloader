@@ -47,7 +47,7 @@ export function Hero() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "api-key": `${process.env.API_KEY}`,
+          "api-key": `${process.env.NEXT_PUBLIC_API_KEY}`,
         },
         body: JSON.stringify(payload),
       })
@@ -56,7 +56,6 @@ export function Hero() {
       if (!res.ok) throw new Error(`API error: ${res.status}`)
 
       const data = await res.json()
-
       console.log("✅ Full API Response:", data)
       if (data['status'] == 'Error' || data['status'] == 'error') throw new Error('An error occured while proccessing url.')
       setVideoData(data)
