@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Header
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import re
+import requests
 import tldextract
 from pydantic import BaseModel
 import yt_dlp
@@ -134,7 +135,7 @@ def get_formats_yt(url: str):
         }
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=False)
+        info = ydl.extract_info(url, download=False, force_generic_extractor=True)
         progressive, video_only, audio_only, others = [], [], [], []
 
         for f in info.get("formats", []):
