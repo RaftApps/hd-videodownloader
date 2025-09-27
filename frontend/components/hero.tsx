@@ -38,10 +38,6 @@ export function Hero() {
     }
     setLoading(true)
     const payload = { url }
-
-    console.log("👉 Fetching formats...")
-    console.log("Payload being sent:", JSON.stringify(payload, null, 2))
-
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/formats`, {
         method: "POST",
@@ -52,26 +48,43 @@ export function Hero() {
         body: JSON.stringify(payload),
       })
 
+      const bodyText = await res.text(); // 🔹 body ek dafa read karke save
 
-      if (!res.ok) throw new Error(`API error: ${res.status}`)
+      if (!res.ok) {
+        let message = "Something went wrong";
+        try {
+          const parsed = JSON.parse(bodyText);
+          // 🔹 Agar detail ke andar message hai to wahi lo
+          if (parsed.detail?.message) {
+            message = parsed.detail.message;
+          } else if (parsed.message) {
+            message = parsed.message;
+          }
+        } catch {
+          message = bodyText;
+        }
+        throw new Error(message);
+      }
+      // ✅ yahan parse karo json me, kyunki hum already text le chuke hain
+      const data = JSON.parse(bodyText);
 
-      const data = await res.json()
-      console.log("✅ Full API Response:", data + process.env.NEXT_PUBLIC_API_KEY)
+
+      // const data = await res.json()
+
       if (data['status'] == 'Error' || data['status'] == 'error') throw new Error('An error occured while proccessing url.')
+
       setVideoData(data)
-    } catch (e: unknown) {
+    } catch (e) {
       if (e instanceof Error) {
-        console.error("Error message:", e.message);
-        setError("Error message: " + e.message)
+        setError(`${e}`)
       } else {
-        console.error("An unknown error occurred.");
         setError("An unknown error occurred.")
       }
-      console.error("❌ Error fetching formats", `${e} ${process.env.NEXT_PUBLIC_API_KEY}`)
     } finally {
       setLoading(false)
     }
   }
+
 
   return (
     <section className="relative isolate overflow-hidden">
@@ -96,13 +109,21 @@ export function Hero() {
           </h1>
           {(
             <div className="w-full max-w-2xl flex items-center gap-2 mt-20">
-              <input
-                type="text"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="Paste your video URL here..."
-                className="flex-1 rounded-lg border-1 border-pink-500 px-4 py-2 shadow-sm focus:outline-none focus:ring-1 focus:ring-pink-500"
-              />
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault(); // stop page reload
+                  handleFetchFormats();
+                }}
+                className="flex w-full"
+              >
+                <input
+                  type="text"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="Paste your video URL here..."
+                  className="flex-1 rounded-lg border border-pink-500 px-4 py-2 shadow-sm focus:outline-none focus:ring-1 focus:ring-pink-500"
+                />
+              </form>
               <Button
                 onClick={handleFetchFormats}
                 disabled={loading}
