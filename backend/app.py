@@ -2,19 +2,24 @@ from fastapi import FastAPI, HTTPException, Header
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import re
+import os
 import requests
 import tldextract
 from pydantic import BaseModel
 import yt_dlp
 import instaloader
 import uuid
+from dotenv import load_dotenv
+
+# Load .env file
+load_dotenv()
 
 app = FastAPI(title="Universal Downloader API", version="0.0.2")
 
-API_KEY = "my-secret-key-hdx"  # change this to your own
-API_KEY_HEADER = "api-key"  # the header name users should send
-
-BLOCKLIST_URL = "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
+API_KEY = os.getenv("API_KEY", "default-key")
+API_KEY_HEADER = "api-key"
+BLOCKLIST_URL = os.getenv("BLOCKLIST_URL")
+COOKIE_FILE = os.getenv("COOKIE_FILE", "youtube_cookies.txt")
 
 def load_blocklist():
     """

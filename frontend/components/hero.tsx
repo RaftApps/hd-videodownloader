@@ -43,14 +43,15 @@ export function Hero() {
     console.log("Payload being sent:", JSON.stringify(payload, null, 2))
 
     try {
-      const res = await fetch("https://api.hdvideodownload.xyz/formats", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/formats`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "api-key": "my-secret-key-hdx",
+          "api-key": process.env.NEXT_PUBLIC_API_KEY || process.env.API_KEY || "",
         },
         body: JSON.stringify(payload),
       })
+
 
       if (!res.ok) throw new Error(`API error: ${res.status}`)
 
