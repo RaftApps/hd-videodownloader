@@ -24,29 +24,55 @@ COOKIE_FILE = os.getenv("COOKIE_FILE", "youtube_cookies.txt")
 def load_blocklist():
     """
     Download and parse the blocklist into a Python set.
+    Handles plain domain lists and hosts-style lists.
     """
     print("Loading blocklist...")
-    response = requests.get(BLOCKLIST_URL, timeout=10)
-    response.raise_for_status()
-    
     blocklist = set()
-    for line in response.text.splitlines():
-        if line.startswith("0.0.0.0"):
+    try:
+        response = requests.get(BLOCKLIST_URL, timeout=10)
+        response.raise_for_status()
+        for line in response.text.splitlines():
+            line = line.strip().lower()
+            if not line or line.startswith("#"):  # skip empty or comments
+                continue
+            # Split on whitespace (handles "0.0.0.0 domain.com")
             parts = line.split()
-            if len(parts) > 1:
-                blocklist.add(parts[1].lower())
-    print(f"Loaded {len(blocklist)} blocked domains.")
+            domain = parts[-1]  # always take the last part
+            # Clean protocol + www
+            domain = domain.replace("http://", "").replace("https://", "")
+            # if domain.startswith("www."):
+            #     domain = domain[4:]
+
+            # Keep only domain part
+            domain = domain.split("/")[0]
+            blocklist.add(domain)
+
+        print(f"Loaded {len(blocklist)} blocked domains.")
+    except Exception as e:
+        print(f"⚠️ Failed to load blocklist from {BLOCKLIST_URL}: {e}")
+        # fallback minimal adult list
+        blocklist = {"xnxx.com", "xvideos.com", "pornhub.com", "redtube.com", "xhamster.com"}
     return blocklist
+
 
 # Load blocklist once
 ADULT_BLOCKLIST = load_blocklist()
 
+
 def is_adult_url(url: str) -> bool:
-    """
-    Check if a URL belongs to a blocked site (adult/adware/etc.).
-    """
-    domain = tldextract.extract(url).registered_domain.lower()
-    return domain in ADULT_BLOCKLIST
+    url = url.strip().lower().replace("http://", "").replace("https://", "")
+    if url.startswith("www."):
+        url = url[4:]
+    domain = url.split("/")[0]
+
+    # Extract registered domain (e.g., xnxx.com from m.xnxx.com)
+    extracted = tldextract.extract(domain)
+    base_domain = f"{extracted.domain}.{extracted.suffix}"
+
+    blocked = domain in ADULT_BLOCKLIST or base_domain in ADULT_BLOCKLIST
+    print(f"Checking {domain} (base: {base_domain}) -> {blocked}")
+    return blocked
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -98,7 +124,11 @@ def verify_api_key(key: str | None):
 def detect_platform(url: str):
     url = url.lower()
     if is_adult_url(url):
-        raise HTTPException(status_code=403, detail="🚫 Adult websites are blocked by policy")
+        raise HTTPException(
+            status_code=403,
+            detail={"error": "Blocked", "message": "🚫 Adult websites are blocked by policy"}
+        )
+
     if "youtube.com" in url or "youtu.be" in url:
         return "youtube"
     elif "instagram.com" in url:
@@ -140,7 +170,7 @@ def get_formats_yt(url: str):
         }
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=False, force_generic_extractor=True)
+        info = ydl.extract_info(url, download=False)
         progressive, video_only, audio_only, others = [], [], [], []
 
         for f in info.get("formats", []):
@@ -235,33 +265,50 @@ def get_formats_instagram(url: str):
                 "others": []
             }
 
-        # Profile recent posts
-        # else:
-        #     username = extract_instagram_username(url)
-        #     profile = instaloader.Profile.from_username(loader.context, username)
-
-        #     urls = []
-        #     count = 0
-        #     for post in profile.get_posts():
-        #         if count >= 10:
-        #             break
-        #         urls.append(post.video_url if post.is_video else post.url)
-        #         count += 1
-
-        #     return {
-        #         "platform": platform,
-        #         "title": f"{username} - Recent Posts",
-        #         "uploader": username,
-        #         "thumbnail": urls[0] if urls else None,
-        #         "duration": None,
-        #         "progressive": [{"url": u, "type": "video" if u.endswith(".mp4") else "image"} for u in urls],
-        #         "video_only": [],
-        #         "audio_only": [],
-        #         "others": []
-        #     }
-
     except Exception as e:
-        return {"status": "error", "message": f"Instagram error: {str(e)}"}
+        # If instaloader fails, retry with yt_dlp
+        try:
+            ydl_opts = {
+                "quiet": True,
+                "no_warnings": True,
+                "http_headers": {
+                    "User-Agent": (
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/91.0.4472.124 Safari/537.36"
+                    )
+                }
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+                progressive = []
+
+                for f in info.get("formats", []):
+                    vcodec, acodec = f.get("vcodec"), f.get("acodec")
+                    if vcodec != "none" and acodec != "none":
+                        progressive.append({
+                            "format_id": f.get("format_id"),
+                            "ext": f.get("ext"),
+                            "resolution": f.get("resolution") or f.get("height"),
+                            "filesize": f.get("filesize") or f.get("filesize_approx"),
+                            "url": f.get("url"),
+                        })
+
+                return {
+                    "platform": "instagram",
+                    "title": info.get("title"),
+                    "uploader": info.get("uploader"),
+                    "thumbnail": info.get("thumbnail"),
+                    "duration": info.get("duration"),
+                    "progressive": progressive,
+                    "video_only": [],
+                    "audio_only": [],
+                    "others": []
+                }
+
+        except Exception as e2:
+            return {"status": "error", "message": f"Instagram failed. Instaloader: {str(e)} | yt_dlp: {str(e2)}"}
+
     
 # ----------------------------
 # Endpoints

@@ -67,7 +67,7 @@ export function Hero() {
         console.error("An unknown error occurred.");
         setError("An unknown error occurred.")
       }
-      console.error("❌ Error fetching formats", e)
+      console.error("❌ Error fetching formats", `${e} ${process.env.NEXT_PUBLIC_API_KEY}`)
     } finally {
       setLoading(false)
     }
