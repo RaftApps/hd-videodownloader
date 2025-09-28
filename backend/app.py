@@ -161,7 +161,6 @@ def get_formats_yt(url: str):
         "quiet": True,
         "no_warnings": True,
         "cookiefile": "youtube_cookies.txt",
-        "cookies": "youtube_cookies.txt",
         "proxy": PROXY_URL,  # rotating proxy
         "http_headers": {
             "User-Agent": (
