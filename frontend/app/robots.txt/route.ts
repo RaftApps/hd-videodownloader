@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     "Allow: /",
     "",
     // Important: no disallow for videos/downloads so Google can index
-    `Sitemap: ${origin}/sitemap.xml`,
+    `Sitemap: https://hdvideodownload.xyz/sitemap.xml`,
   ].join("\n")
 
   return new Response(lines, {
