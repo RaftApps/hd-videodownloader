@@ -277,7 +277,7 @@ function FormatCard({ format }: { format: any }) {
       <Button
         className="mt-3 inline-block text-center rounded-md bg-pink-600 px-3 py-1 text-white text-sm font-medium hover:bg-pink-700"
         onClick={() => window.open(
-          `/proxy?url=${encodeURIComponent(format.url)}`,
+          encodeURIComponent(format.url),
           "_blank"
         )}
       >
