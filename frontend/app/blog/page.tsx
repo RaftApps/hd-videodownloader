@@ -1,4 +1,4 @@
-import { AppverseFooter } from "@/components/appverse-footer";
+import { AppverseFooter } from "@/components/footer";
 import { SiteHeader } from "@/components/site-header";
 import Link from "next/link";
 

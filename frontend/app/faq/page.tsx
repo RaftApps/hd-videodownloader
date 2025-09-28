@@ -1,5 +1,5 @@
 import { SiteHeader } from "@/components/site-header"
-import { AppverseFooter } from "@/components/appverse-footer"
+import { AppverseFooter } from "@/components/footer"
 
 export default function FAQPage() {
   return (

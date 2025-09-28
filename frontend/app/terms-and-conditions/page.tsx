@@ -1,5 +1,5 @@
 import { SiteHeader } from "@/components/site-header"
-import { AppverseFooter } from "@/components/appverse-footer"
+import { AppverseFooter } from "@/components/footer"
 import Link from "next/link"
 import type { Metadata } from "next"
 

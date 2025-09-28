@@ -3,7 +3,7 @@ import { Hero } from "@/components/hero"
 import { Features } from "@/components/features"
 import { Reviews } from "@/components/reviews"
 import { DownloadApp } from "@/components/download-app"
-import { AppverseFooter } from "@/components/appverse-footer"
+import { AppverseFooter } from "@/components/footer"
 import { FAQs } from "@/components/faqs" // ✅ new component
 import Script from "next/script"
 import Head from "next/head"

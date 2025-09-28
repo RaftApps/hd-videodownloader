@@ -1,6 +1,6 @@
 import BlogLayout from "@/components/blog/BlogLayout";
 import BlogContent from "@/components/blog/BlogContent";
-import { AppverseFooter } from "@/components/appverse-footer";
+import { AppverseFooter } from "@/components/footer";
 import { SiteHeader } from "@/components/site-header";
 
 export default function BlogPost({ params }: { params: { slug: string } }) {
