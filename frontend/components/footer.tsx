@@ -1,11 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { FaInstagram, FaTwitter, FaYoutube, FaHashtag } from "react-icons/fa"
-import LazyVideo from "./lazy-video"
+import { FaLinkedin, FaInstagram, FaTwitter, FaYoutube, FaHashtag } from "react-icons/fa"
 import Image from "next/image"
 
 interface FooterContent {
@@ -20,22 +16,6 @@ const defaultContent: FooterContent = {
 
 
 export function AppverseFooter() {
-  const [content, setContent] = useState<FooterContent>(defaultContent)
-
-  useEffect(() => {
-    // Load content from localStorage
-    const savedContent = localStorage.getItem("skitbit-content")
-    if (savedContent) {
-      try {
-        const parsed = JSON.parse(savedContent)
-        if (parsed.footer) {
-          setContent(parsed.footer)
-        }
-      } catch (error) {
-        console.error("Error parsing saved content:", error)
-      }
-    }
-  }, [])
 
   return (
     <section className="text-white">
@@ -102,9 +82,9 @@ export function AppverseFooter() {
             <div className="space-y-3">
               <div className="flex items-center gap-1.5">
                 <Image src="/icons/raftapps-color.svg" alt="RaftApps LLC logo" width={24} height={24} className="h-6 w-6" />
-                <span className="text-xl font-semibold text-pink-600">RaftApps LLC</span>
+                <a href='https://www.raftapps.com' target="_blank" className="text-xl font-semibold text-pink-600">RaftApps LLC</a>
               </div>
-              <p className="max-w-sm text-sm text-neutral-400">{content.tagline}</p>
+              <p className="max-w-sm text-sm text-neutral-400">{defaultContent.tagline}</p>
             </div>
 
             {/* Navigation */}
@@ -127,23 +107,35 @@ export function AppverseFooter() {
                   <li className="flex items-center gap-2">
                     <FaTwitter className="h-4 w-4 text-neutral-400" />
                     <a
-                      href="https://twitter.com/theskitbit"
+                      href="https://x.com/raftapps"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-neutral-400 hover:text-pink-500"
-                      aria-label="Follow skitbit on Twitter"
+                      aria-label="Follow RaftApps LLC on Twitter"
                     >
                       X/Twitter
                     </a>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaYoutube className="h-4 w-4 text-neutral-400" />
+                    <FaLinkedin className="h-4 w-4 text-neutral-400" />
                     <a
-                      href="https://www.youtube.com/@skitbitinternational"
+                      href="https://www.linkedin.com/company/raftapps-llc/"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-neutral-400 hover:text-pink-500"
-                      aria-label="Subscribe to skitbit on YouTube"
+                      aria-label="Follow RaftApps LLC on Linkedin"
+                    >
+                      Linkedin
+                    </a>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <FaYoutube className="h-4 w-4 text-neutral-400" />
+                    <a
+                      href="https://www.youtube.com/@raftapps"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-neutral-400 hover:text-pink-500"
+                      aria-label="Subscribe to RaftApps LLC on YouTube"
                     >
                       YouTube
                     </a>
@@ -151,11 +143,11 @@ export function AppverseFooter() {
                   <li className="flex items-center gap-2">
                     <FaInstagram className="h-4 w-4 text-neutral-400" />
                     <a
-                      href="https://instagram.com/theskitbit"
+                      href="https://www.instagram.com/raftapps.llc/"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-neutral-400 hover:text-pink-500"
-                      aria-label="Follow skitbit on Instagram"
+                      aria-label="Follow RaftApps LLC on Instagram"
                     >
                       Instagram
                     </a>
@@ -163,11 +155,11 @@ export function AppverseFooter() {
                   <li className="flex items-center gap-2">
                     <FaHashtag className="h-4 w-4 text-neutral-400" />
                     <a
-                      href="https://threads.com/theskitbit"
+                      href="https://threads.com/raftapps-llc"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-neutral-400 hover:text-pink-500"
-                      aria-label="Follow skitbit on Threads"
+                      aria-label="Follow RaftApps on Threads"
                     >
                       Threads
                     </a>
@@ -179,7 +171,7 @@ export function AppverseFooter() {
 
           {/* Bottom bar */}
           <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 text-xs text-neutral-500 sm:flex-row">
-            <p>{content.copyright}</p>
+            <p><a href="https://www.raftapps.com" target="_blank">{defaultContent.copyright}</a></p>
             <div className="flex items-center gap-6">
               <Link href="/privacy-policy" className="text-neutral-400 hover:text-pink-500">
                 Privacy Policy

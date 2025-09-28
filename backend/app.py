@@ -1,8 +1,9 @@
 from fastapi import FastAPI, HTTPException, Header, Query
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import re
 import os
+import httpx
 import requests
 import tldextract
 from pydantic import BaseModel
@@ -129,7 +130,6 @@ def detect_platform(url: str):
             status_code=403,
             detail={"error": "Blocked", "message": "🚫 Adult websites are blocked by policy"}
         )
-
     if "youtube.com" in url or "youtu.be" in url:
         return "youtube"
     elif "instagram.com" in url:
@@ -167,7 +167,10 @@ def get_formats_yt(url: str):
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
                 "Chrome/91.0.4472.124 Safari/537.36"
-            )
+            ),
+            "Accept": "*/*",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Sec-Fetch-Mode": "no-cors"
         }
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -336,7 +339,16 @@ async def playlist_formats(
     task_id = str(uuid.uuid4())
     tasks_progress[task_id] = {"total": 0, "completed": 0, "results": [], "errors": [], "status": "running"}
 
-    ydl_opts = {"quiet": True, "no_warnings": True}
+    ydl_opts = { "quiet": True,
+                "no_warnings": True,
+                "proxy": PROXY_URL,  # rotating proxy
+                "http_headers": {
+                    "User-Agent": (
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/91.0.4472.124 Safari/537.36"
+                    )
+                }}
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(req.url, download=False)
         entries = info.get("entries", [])
@@ -356,6 +368,8 @@ async def playlist_formats(
     tasks_progress[task_id]["results"] = results
     tasks_progress[task_id]["status"] = "completed"
     return {"task_id": task_id, "status": "completed", "results": results}
+
+
 
 app.get("/api/download")
 def download_file(
@@ -410,6 +424,41 @@ async def bulk_formats(
     tasks_progress[task_id]["results"] = results
     tasks_progress[task_id]["status"] = "completed"
     return {"task_id": task_id, "status": "completed", "results": results}
+
+@app.get("/proxy")
+async def proxy(
+    url: str = Query(..., description="Signed video URL"),
+    filename: str = Query("video.mp4", description="Optional filename")
+):
+    # 🔥 Use the same proxy yt-dlp used
+    proxy_url = PROXY_URL if PROXY_URL else None
+
+    # 🔥 Use proper headers
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
+        ),
+        "Accept": "*/*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Connection": "keep-alive",
+    }
+
+    async with httpx.AsyncClient(proxies=proxy_url, follow_redirects=True, timeout=None) as client:
+        r = await client.get(url, headers=headers)
+
+        if r.status_code != 200:
+            return {"status": "error", "message": f"Failed with {r.status_code}"}
+
+        # ✅ Stream file back to browser as real download
+        return StreamingResponse(
+            r.aiter_bytes(),
+            media_type=r.headers.get("content-type", "application/octet-stream"),
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"'
+            },
+        )
 
 @app.get("/progress/{task_id}")
 def progress(
