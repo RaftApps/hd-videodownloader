@@ -110,14 +110,18 @@ export function Hero() {
           {(
             <div className="w-full max-w-2xl flex items-center gap-2 mt-20">
               <form
+                action="/"            // ✅ allows browser to track history
+                method="GET"          // ✅ required for autocomplete to store
                 onSubmit={(e) => {
-                  e.preventDefault(); // stop page reload
+                  e.preventDefault();
                   handleFetchFormats();
                 }}
                 className="flex w-full"
               >
                 <input
-                  type="text"
+                  type="text"          // text type for reliable browser autocomplete
+                  name="video-url"     // persistent name for browser history
+                  autoComplete="on"    // enable browser suggestions
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="Paste your video URL here..."

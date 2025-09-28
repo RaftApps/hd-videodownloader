@@ -19,6 +19,7 @@ app = FastAPI(title="Universal Downloader API", version="0.0.2")
 API_KEY = os.getenv("API_KEY", "default-key")
 API_KEY_HEADER = "api-key"
 BLOCKLIST_URL = os.getenv("BLOCKLIST_URL")
+PROXY_URL = os.getenv("PROXY_URL")
 COOKIE_FILE = os.getenv("COOKIE_FILE", "youtube_cookies.txt")
 
 def load_blocklist():
@@ -161,6 +162,7 @@ def get_formats_yt(url: str):
         "no_warnings": True,
         "cookiefile": "youtube_cookies.txt",
         "cookies": "youtube_cookies.txt",
+        "proxy": PROXY_URL,  # rotating proxy
         "http_headers": {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -271,6 +273,7 @@ def get_formats_instagram(url: str):
             ydl_opts = {
                 "quiet": True,
                 "no_warnings": True,
+                "proxy": PROXY_URL,  # rotating proxy
                 "http_headers": {
                     "User-Agent": (
                         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
