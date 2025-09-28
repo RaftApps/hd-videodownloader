@@ -1,20 +1,19 @@
 // app/sitemap/route.ts
-const URLS = [
+
+// Static URLs
+const STATIC_URLS = [
   { url: "/", priority: "1.0", changefreq: "weekly" },
   { url: "/privacy-policy", priority: "0.6", changefreq: "monthly" },
-  { url: "/t&c", priority: "0.6", changefreq: "monthly" },
+  { url: "/terms-and-conditions", priority: "0.6", changefreq: "monthly" }, // fixed clean slug
 ]
-
-// Add dynamic video pages if you ever index them
-// const VIDEOS = [{ slug: 'funny-cats' }, { slug: 'music-video-123' }]
 
 export async function GET(request: Request) {
   const { origin } = new URL(request.url)
   const lastmod = new Date().toISOString()
 
-  const urlEntries = URLS.map(
+  const staticEntries = STATIC_URLS.map(
     ({ url, priority, changefreq }) => `  <url>
-    <loc>${origin}${url}</loc>
+    <loc>${origin}${encodeURI(url)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>${changefreq}</changefreq>
     <priority>${priority}</priority>
@@ -23,7 +22,6 @@ export async function GET(request: Request) {
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urlEntries.join("\n")}
 </urlset>`
 
   return new Response(body, {

@@ -184,7 +184,7 @@ export function AppverseFooter() {
               <Link href="/privacy-policy" className="text-neutral-400 hover:text-pink-500">
                 Privacy Policy
               </Link>
-              <Link href="/t&c" className="text-neutral-400 hover:text-pink-500">
+              <Link href="/terms-and-conditions" className="text-neutral-400 hover:text-pink-500">
                 Terms & Conditions
               </Link>
             </div>

@@ -4,16 +4,8 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowDownToLine, Download } from "lucide-react"
 import {
-  FaYoutube,
-  FaFacebook,
-  FaInstagram,
-  FaTwitter,
-  FaTiktok,
-  FaReddit,
-  FaVimeo,
-  FaSoundcloud,
-  FaPinterest,
-  FaHashtag,
+  FaYoutube, FaFacebook, FaInstagram, FaTwitter, FaTiktok,
+  FaReddit, FaVimeo, FaSoundcloud, FaPinterest, FaHashtag,
 } from "react-icons/fa"
 import { SiDailymotion, SiTwitch, SiVk, SiXiaohongshu } from "react-icons/si"
 import { MdVideoLibrary } from "react-icons/md"
@@ -23,68 +15,58 @@ export function Hero() {
   const [loading, setLoading] = useState(false)
   const [videoData, setVideoData] = useState<any>(null)
   const [error, setError] = useState("")
-  const urlRegex = /^(https?:\/\/)?(www\.)?([\w-]+\.)+[\w-]+(\/[\w\-./?%&=]*)?$/i;
+  const urlRegex = /^(https?:\/\/)?(www\.)?([\w-]+\.)+[\w-]+(\/[\w\-./?%&=]*)?$/i
 
+  // Auto-hide errors after 3s
   useEffect(() => {
     if (error) {
       const timer = setTimeout(() => setError(""), 3000)
       return () => clearTimeout(timer)
     }
   }, [error])
+
   const handleFetchFormats = async () => {
     if (!urlRegex.test(url)) {
-      setError('Please enter a valid url')
+      setError("Please enter a valid url")
       return
     }
     setLoading(true)
-    const payload = { url }
+
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/formats`, {
+      const res = await fetch(`http://127.0.0.1:8080/formats`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "api-key": process.env.NEXT_PUBLIC_API_KEY || "",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ url }),
       })
 
-      const bodyText = await res.text(); // 🔹 body ek dafa read karke save
-
+      const bodyText = await res.text()
       if (!res.ok) {
-        let message = "Something went wrong";
+        let message = "Something went wrong"
         try {
-          const parsed = JSON.parse(bodyText);
-          // 🔹 Agar detail ke andar message hai to wahi lo
-          if (parsed.detail?.message) {
-            message = parsed.detail.message;
-          } else if (parsed.message) {
-            message = parsed.message;
-          }
+          const parsed = JSON.parse(bodyText)
+          if (parsed.detail?.message) message = parsed.detail.message
+          else if (parsed.message) message = parsed.message
         } catch {
-          message = bodyText;
+          message = bodyText
         }
-        throw new Error(message);
+        throw new Error(message)
       }
-      // ✅ yahan parse karo json me, kyunki hum already text le chuke hain
-      const data = JSON.parse(bodyText);
 
-
-      // const data = await res.json()
-
-      if (data['status'] == 'Error' || data['status'] == 'error') throw new Error('An error occured while proccessing url.')
+      const data = JSON.parse(bodyText)
+      if (["Error", "error"].includes(data.status)) {
+        throw new Error("An error occurred while processing url.")
+      }
 
       setVideoData(data)
     } catch (e) {
-      if (e instanceof Error) {
-        setError(`${e}`)
-      } else {
-        setError("An unknown error occurred.")
-      }
+      setError(e instanceof Error ? e.message : "An unknown error occurred.")
     } finally {
       setLoading(false)
     }
   }
-
 
   return (
     <section className="relative isolate overflow-hidden">
@@ -107,45 +89,41 @@ export function Hero() {
             </span>
             <span className="block">FOR EVERYONE</span>
           </h1>
-          {(
-            <div className="w-full max-w-2xl flex items-center gap-2 mt-20">
-              <form
-                action="/"            // ✅ allows browser to track history
-                method="GET"          // ✅ required for autocomplete to store
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleFetchFormats();
-                }}
-                className="flex w-full"
-              >
-                <input
-                  type="text"          // text type for reliable browser autocomplete
-                  name="video-url"     // persistent name for browser history
-                  autoComplete="on"    // enable browser suggestions
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="Paste your video URL here..."
-                  className="flex-1 rounded-lg border border-pink-500 px-4 py-2 shadow-sm focus:outline-none focus:ring-1 focus:ring-pink-500"
-                />
-              </form>
-              <Button
-                onClick={handleFetchFormats}
-                disabled={loading}
-                className="bg-gradient-to-r from-pink-500 to-rose-500 text-white font-medium rounded-md px-6 py-5 hover:from-pink-600 hover:to-rose-600 hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer flex items-center justify-center gap-2"
-              >
-                {/* Mobile: show icon */}
-                <span className="block sm:hidden">
-                  <ArrowDownToLine size={20} />
-                </span>
 
-                {/* Tablet & larger: show text */}
-                <span className="hidden sm:block">
-                  {loading ? "Loading..." : "Download"}
-                </span>
-              </Button>
-            </div>
-          )}
+          {/* Search Bar */}
+          <div className="w-full max-w-2xl flex items-center gap-2 mt-20">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                handleFetchFormats()
+              }}
+              className="flex w-full"
+            >
+              <input
+                type="text"
+                name="video-url"
+                autoComplete="on"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="Paste your video URL here..."
+                className="flex-1 rounded-lg border border-pink-500 px-4 py-2 shadow-sm focus:outline-none focus:ring-1 focus:ring-pink-500"
+              />
+            </form>
+            <Button
+              onClick={handleFetchFormats}
+              disabled={loading}
+              className="bg-gradient-to-r from-pink-500 to-rose-500 text-white font-medium rounded-md px-6 py-5 hover:from-pink-600 hover:to-rose-600 hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+              <span className="block sm:hidden">
+                <ArrowDownToLine size={20} />
+              </span>
+              <span className="hidden sm:block">
+                {loading ? "Loading..." : "Download"}
+              </span>
+            </Button>
+          </div>
 
+          {/* Error Message */}
           {error && (
             <div className="mt-4 w-full max-w-2xl mx-auto bg-red-50 border border-red-400 text-red-800 px-4 py-3 rounded-lg shadow-sm flex items-center gap-2">
               <svg
@@ -154,75 +132,49 @@ export function Hero() {
                 stroke="currentColor"
                 strokeWidth="2"
                 viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
               >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   d="M12 9v2m0 4h.01M4.5 12a7.5 7.5 0 1115 0 7.5 7.5 0 01-15 0z"
-                ></path>
+                />
               </svg>
-              <span className="text-sm">{error.split('\n')[0]} <br /> {error.split('\n')[1]}</span>
+              <span className="text-sm">{error}</span>
             </div>
           )}
 
-
-          {/* ✅ Results */}
+          {/* Results */}
           {videoData && (
             <div className="mt-10 max-w-4xl">
-
-              {/* ✅ Video Info */}
+              {/* Video Info */}
               <div className="flex-col sm:flex-row items-center gap-6 mb-10 border rounded-lg p-4 shadow-sm">
                 <img
                   src={videoData.thumbnail}
                   alt={videoData.title}
-                  className="w-100% h-100% object-cover rounded-lg shadow-md"
+                  className="w-full h-auto object-cover rounded-lg shadow-md"
                 />
-                <div className="flex-1 mt-10">
+                <div className="flex-1 mt-4 sm:mt-0">
                   <h2 className="text-xl font-bold mb-1">{videoData.title}</h2>
                   <p className="text-sm text-gray-600">
                     ⏱️ Duration: {(videoData.duration / 60).toFixed(2) || "Unknown"} mins
                   </p>
                   {videoData.uploader && (
-                    <p className="text-sm text-gray-600">Uploader: {videoData.uploader}</p>
+                    <p className="text-sm text-gray-600">
+                      Uploader: {videoData.uploader}
+                    </p>
                   )}
                 </div>
               </div>
 
-              {/* Progressive */}
+              {/* Formats */}
               {videoData.progressive?.length > 0 && (
-                <div className="mb-8">
-                  <h3 className="font-semibold text-lg mb-3">🎬 Video with Audio</h3>
-                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-                    {videoData.progressive.map((f: any, i: number) => (
-                      <FormatCard key={i} format={f} />
-                    ))}
-                  </div>
-                </div>
+                <FormatSection title="🎬 Video with Audio" formats={videoData.progressive} />
               )}
-
-              {/* Video Only */}
               {videoData.video_only?.length > 0 && (
-                <div className="mb-8">
-                  <h3 className="font-semibold text-lg mb-3">🎥 Video Only</h3>
-                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-                    {videoData.video_only.map((f: any, i: number) => (
-                      <FormatCard key={i} format={f} />
-                    ))}
-                  </div>
-                </div>
+                <FormatSection title="🎥 Video Only" formats={videoData.video_only} />
               )}
-
-              {/* Audio Only */}
               {videoData.audio_only?.length > 0 && (
-                <div className="mb-8">
-                  <h3 className="font-semibold text-lg mb-3">🎧 Audio Only</h3>
-                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-                    {videoData.audio_only.map((f: any, i: number) => (
-                      <FormatCard key={i} format={f} />
-                    ))}
-                  </div>
-                </div>
+                <FormatSection title="🎧 Audio Only" formats={videoData.audio_only} />
               )}
             </div>
           )}
@@ -248,19 +200,30 @@ export function Hero() {
   )
 }
 
+/* ✅ Section wrapper */
+function FormatSection({ title, formats }: { title: string; formats: any[] }) {
+  return (
+    <div className="mb-8">
+      <h3 className="font-semibold text-lg mb-3">{title}</h3>
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+        {formats.map((f, i) => (
+          <FormatCard key={i} format={f} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 /* ✅ Reusable Format Card */
 function FormatCard({ format }: { format: any }) {
   return (
     <div className="rounded-lg border p-4 shadow-sm flex flex-col justify-between">
       <div>
         <p className="font-medium">
-          {format.resolution || format.audioQuality || "Unknown"} •{" "}
-          {format.ext?.toUpperCase()}
+          {format.resolution || format.audioQuality || "Unknown"} • {format.ext?.toUpperCase()}
         </p>
         <p className="text-xs text-gray-600">
-          {format.filesize
-            ? `${(format.filesize / (1024 * 1024)).toFixed(2)} MB`
-            : "Unknown size"}
+          {format.filesize ? `${(format.filesize / (1024 * 1024)).toFixed(2)} MB` : "Unknown size"}
         </p>
       </div>
       <Button
@@ -269,59 +232,67 @@ function FormatCard({ format }: { format: any }) {
       >
         Download
       </Button>
-      {/* <a
-        href={format.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-3 inline-block text-center rounded-md bg-pink-600 px-3 py-1 text-white text-sm font-medium hover:bg-pink-700"
-      >
-        Download
-      </a> */}
     </div>
   )
 }
 
 const handleUrl = async (url: string) => {
   try {
-    // Helper: check if ends with a known extension
-    const fileExtRegex = /\.(mp4|webm|mp3|wav|m4a|mov|avi|flac|ogg)$/i;
+    const fileExtRegex = /\.(mp4|webm|mp3|wav|m4a|mov|avi|flac|ogg)(\?.*)?$/i;
 
-    // If it has extension → force download
+    // ✅ Direct file download
     if (fileExtRegex.test(url)) {
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = url.split("/").pop() || "download";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      console.log("⬇️ Direct download triggered:", url);
-      return;
+      try {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = url.split("/").pop()?.split("?")[0] || "download";
+        a.target = "_blank"; // ✅ ensure new tab if browser ignores download attr
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        console.log("⬇️ Forced download triggered:", url);
+        return;
+      } catch (err) {
+        console.warn("⚠️ Forced download failed → fallback new tab");
+        window.open(url, "_blank");
+        return;
+      }
     }
 
-    // If it's a Google signed URL → skip fetch, just open in new tab
+    // ✅ Special case for Google signed URLs
     if (url.includes("googlevideo.com") || url.includes("requiressl=yes")) {
       console.log("🔗 Google signed URL detected → opening in new tab");
       window.open(url, "_blank");
       return;
     }
 
-    // Try fetch HEAD for other URLs
-    console.log("🔍 Trying fetch for:", url);
+    // ✅ HEAD request
+    console.log("🔍 Trying HEAD request:", url);
     const response = await fetch(url, { method: "HEAD" });
 
     if (response.ok) {
-      console.log("✅ URL reachable:", url);
-      window.open(url, "_blank");
+      try {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = url.split("/").pop()?.split("?")[0] || "download";
+        a.target = "_blank"; // ✅ even for forced download
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        console.log("✅ HEAD OK → forced download attempted");
+      } catch (err) {
+        console.warn("⚠️ Download attempt failed → new tab fallback");
+        window.open(url, "_blank");
+      }
     } else {
-      console.log("⚠️ HEAD request failed, opening in new tab");
+      console.log("⚠️ HEAD failed → opening in new tab");
       window.open(url, "_blank");
     }
   } catch (error) {
     console.error("❌ Error handling URL:", error);
-    window.open(url, "_blank");
+    window.open(url, "_blank"); // ✅ final fallback always new tab
   }
 };
-
 
 const supportedSites = [
   { name: "YouTube", icon: <FaYoutube /> },
@@ -340,5 +311,3 @@ const supportedSites = [
   { name: "Pinterest", icon: <FaPinterest className="w-6 h-6 text-red-600" /> },
   { name: "And 1800+ More", icon: <MdVideoLibrary className="w-6 h-6 text-gray-600" /> },
 ]
-
-//       if (res.statusText == 'Error' || res.statusText == 'error') throw new Error('An error occured while proccessing url.')

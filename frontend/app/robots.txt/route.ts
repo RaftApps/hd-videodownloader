@@ -1,40 +1,16 @@
 // app/robots/route.ts
 export async function GET(request: Request) {
   const { origin } = new URL(request.url)
-  const ROBOTS_VERSION = "1.0.0"
+  const ROBOTS_VERSION = "1.1.0"
 
   const lines = [
-    `# robots.txt for HD Video Downloader — SEO & AI Crawlers Optimized`,
+    `# robots.txt for hdvideodownload.xyz — SEO & Crawl Optimized`,
     `# Version: ${ROBOTS_VERSION}`,
-    "",
-    "User-agent: GPTBot",
-    "Allow: /",
-    "",
-    "User-agent: ClaudeBot",
-    "Allow: /",
-    "",
-    "User-agent: PerplexityBot",
-    "Allow: /",
-    "",
-    "User-agent: ChatGPT-User",
-    "Allow: /",
-    "",
-    "User-agent: Googlebot",
-    "Allow: /",
-    "",
-    "User-agent: Bingbot",
-    "Allow: /",
     "",
     "User-agent: *",
     "Allow: /",
     "",
-    "Disallow: /privacy-policy",
-    "Disallow: /t&c",
-    "Disallow: /admin/",
-    "Disallow: /api/",
-    "Disallow: /downloads/",
-    "Disallow: /videos/",
-    "",
+    // Important: no disallow for videos/downloads so Google can index
     `Sitemap: ${origin}/sitemap.xml`,
   ].join("\n")
 

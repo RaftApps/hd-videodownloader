@@ -1,5 +1,5 @@
-from fastapi import FastAPI, HTTPException, Header
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException, Header, Query
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 import re
 import os
@@ -356,6 +356,33 @@ async def playlist_formats(
     tasks_progress[task_id]["results"] = results
     tasks_progress[task_id]["status"] = "completed"
     return {"task_id": task_id, "status": "completed", "results": results}
+
+app.get("/api/download")
+def download_file(
+    url: str = Query(..., description="Signed CDN URL"),
+    filename: str = Query(..., description="Desired filename with extension")
+):
+    """
+    Redirect user to CDN with Content-Disposition headers.
+    If redirect fails, fallback = open signed URL in new tab.
+    """
+
+    try:
+        response = RedirectResponse(url=url, status_code=302)
+        response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+    except Exception:
+        html = f"""
+        <html>
+            <body>
+                <script>
+                    window.open("{url}", "_blank");
+                </script>
+                <p>Redirect failed, opening in new tab: <a href="{url}" target="_blank">{url}</a></p>
+            </body>
+        </html>
+        """
+        return HTMLResponse(content=html)
 
 @app.post("/bulk-formats")
 async def bulk_formats(
