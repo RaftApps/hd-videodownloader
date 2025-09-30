@@ -1,9 +1,10 @@
-from fastapi import FastAPI, HTTPException, Header, Query
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
+import time
+import tempfile
+from fastapi import FastAPI, HTTPException, Header, Query, BackgroundTasks
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import re
 import os
-import httpx
 import requests
 import tldextract
 from pydantic import BaseModel
@@ -15,12 +16,26 @@ from dotenv import load_dotenv
 # Load .env file
 load_dotenv()
 
-app = FastAPI(title="Universal Downloader API", version="0.0.2")
+app = FastAPI(title="HD Video Downloader API", version="0.0.2")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://hdvideodownload.xyz"],  # only your site
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+DOWNLOAD_DIR = "downloads"
+os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+
 
 API_KEY = os.getenv("API_KEY", "default-key")
 API_KEY_HEADER = "api-key"
 BLOCKLIST_URL = os.getenv("BLOCKLIST_URL")
 PROXY_URL = os.getenv("PROXY_URL")
+DEBUG_URL = os.getenv("DEBUG_URL")
+PROD_URL = os.getenv("PROD_URL")
 COOKIE_FILE = os.getenv("COOKIE_FILE", "youtube_cookies.txt")
 
 def load_blocklist():
@@ -74,14 +89,6 @@ def is_adult_url(url: str) -> bool:
     blocked = domain in ADULT_BLOCKLIST or base_domain in ADULT_BLOCKLIST
     print(f"Checking {domain} (base: {base_domain}) -> {blocked}")
     return blocked
-
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 tasks_progress = {}  # in-memory progress tracker
 
@@ -152,25 +159,56 @@ def detect_platform(url: str):
         return "twitch"
     else:
         return "unknown"
+    
+def delete_file_later(path: str, delay: int = 300):
+    time.sleep(delay)
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+            print(f"✅ Deleted temporary file: {path}")
+    except Exception as e:
+        print(f"⚠️ Error deleting file {path}: {e}")
 
 # ----------------------------
 # Main format extraction
 # ----------------------------
 def get_formats_yt(url: str):
+    platform = detect_platform(url)
+    # ydl_opts = {
+    #     "quiet": False,
+    #     "no_warnings": True,
+    #     # "proxy": PROXY_URL,  # rotating proxy
+    #     # "Referer": "https://www.tiktok.com/" if platform == "tiktok" else "",
+    #     # "format": "bestvideo+bestaudio/best",  # force muxed playable
+    #     # "merge_output_format": "mp4",  # ensure proper mux
+    #     # "cookiesfrombrowser": ("chrome",),  # or "brave", "edge", etc.
+    #     "http_headers": {
+    #         "User-Agent": (
+    #             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    #             "AppleWebKit/537.36 (KHTML, like Gecko) "
+    #             "Chrome/91.0.4472.124 Safari/537.36"
+    #             ),
+    #         # "Referer": "https://www.tiktok.com/" if platform == "tiktok" else "",
+    #         # "Accept": "*/*",
+    #         # "Accept-Language": "en-US,en;q=0.9",
+    #         # "Connection": "keep-alive",
+    #         # "Sec-Fetch-Site": "same-origin",
+    #         # "Sec-Fetch-Mode": "cors",
+    #         # "Sec-Fetch-Dest": "empty",
+    #     },
+    # }
     ydl_opts = {
         "quiet": True,
         "no_warnings": True,
-        "cookiefile": "youtube_cookies.txt",
+        "cookies": COOKIE_FILE,
         "proxy": PROXY_URL,  # rotating proxy
+        "Referer": "https://www.youtube.com/" if platform == "youtube" else "",
         "http_headers": {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
                 "Chrome/91.0.4472.124 Safari/537.36"
-            ),
-            "Accept": "*/*",
-            "Accept-Language": "en-US,en;q=0.5",
-            "Sec-Fetch-Mode": "no-cors"
+            )
         }
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -186,7 +224,8 @@ def get_formats_yt(url: str):
                 "filesize": f.get("filesize") or f.get("filesize_approx"),
                 "url": f.get("url"),
             }
-            if fmt["ext"] in ["mhtml", "webpage", "dash"]:
+            if (fmt["ext"] in ["mhtml", "webpage", "dash", "m3u8"]
+                or (fmt["url"] and fmt["url"].endswith(".m3u8"))):
                 continue
             if vcodec != "none" and acodec != "none":
                 progressive.append(fmt)
@@ -208,6 +247,7 @@ def get_formats_yt(url: str):
             "audio_only": audio_only,
             "others": others
         }
+
 
 def get_formats_instagram(url: str):
     try:
@@ -313,6 +353,67 @@ def get_formats_instagram(url: str):
 
         except Exception as e2:
             return {"status": "error", "message": f"Instagram failed. Instaloader: {str(e)} | yt_dlp: {str(e2)}"}
+        
+def process_tiktok(url: str, background_tasks: BackgroundTasks):
+    """
+    Download TikTok video server-side, return metadata + server download URL
+    """
+    if "tiktok.com" not in url:
+        raise HTTPException(status_code=400, detail="Invalid TikTok URL")
+
+    # Generate unique filename
+    video_id = str(uuid.uuid4())
+    output_template = os.path.join(DOWNLOAD_DIR, f"{video_id}.%(ext)s")
+
+    ydl_opts = {
+        "format": "mp4",
+        "outtmpl": output_template,
+        "noplaylist": True,
+        "proxy": PROXY_URL,  # rotating proxy
+    }
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+
+            # Final downloaded file path
+            downloaded_file = ydl.prepare_filename(info)
+
+            # Determine extension and filesize
+            ext = info.get("ext") or "mp4"
+            filesize = os.path.getsize(downloaded_file) if os.path.exists(downloaded_file) else None
+            
+            base_url = PROD_URL 
+            # if app.debug else PROD_URL
+
+            response = {
+                "platform": "tiktok",
+                "title": info.get("title"),
+                "uploader": info.get("uploader"),
+                "duration": info.get("duration"),
+                "thumbnail": info.get("thumbnail"),
+                "progressive": [
+                    {
+                        "format_id": "server",
+                        "ext": ext,
+                        "resolution": f"{info.get('height', 'Unknown')}p",
+                        "filesize": filesize,
+                        "url": f"{base_url}/files/{os.path.basename(downloaded_file)}",
+                    }
+                ],
+                "video_only": [],
+                "audio_only": [],
+                "others": []
+            }
+            
+            background_tasks.add_task(delete_file_later, downloaded_file)
+            
+            return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+
 
     
 # ----------------------------
@@ -321,13 +422,16 @@ def get_formats_instagram(url: str):
 
 @app.post("/formats")
 async def formats(
-    req: URLRequest, 
+    req: URLRequest,
+    background_tasks: BackgroundTasks,   # ✅ inject instance here
     api_key: str | None = Header(None, alias=API_KEY_HEADER)
 ):
     verify_api_key(api_key)
     platform = detect_platform(req.url)
     if platform == "instagram":
         return JSONResponse(get_formats_instagram(req.url))
+    elif platform == "tiktok":
+        return JSONResponse(process_tiktok(req.url, background_tasks))
     return JSONResponse(get_formats_yt(req.url))
 
 @app.post("/playlist-formats")
@@ -351,6 +455,7 @@ async def playlist_formats(
                 }}
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(req.url, download=False)
+        print(info)
         entries = info.get("entries", [])
         tasks_progress[task_id]["total"] = len(entries)
 
@@ -369,7 +474,80 @@ async def playlist_formats(
     tasks_progress[task_id]["status"] = "completed"
     return {"task_id": task_id, "status": "completed", "results": results}
 
+# from fastapi.responses import StreamingResponse
+# import yt_dlp
+# import requests
 
+@app.get("/stream/tiktok")
+async def stream_tiktok(url: str = Query(..., description="TikTok video URL")):
+    try:
+        # Create a temp file
+        tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+        tmp_file.close()
+        file_path = tmp_file.name
+
+        # yt-dlp options
+        ydl_opts = {
+            "outtmpl": file_path,
+            "proxy": PROXY_URL,
+            "output": "-",
+            "format": "mp4",
+        }
+
+        # Download first
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            ydl.download([url])
+
+        # Make sure file exists and has size
+        if not os.path.exists(file_path) or os.path.getsize(file_path) == 0:
+            raise HTTPException(status_code=500, detail="Download failed: file empty")
+
+        # Streaming generator
+        def iterfile():
+            with open(file_path, "rb") as f:
+                for chunk in iter(lambda: f.read(1024 * 1024), b""):
+                    yield chunk
+            # cleanup after stream finishes
+            os.remove(file_path)
+
+        # Return as downloadable mp4
+        return StreamingResponse(
+            iterfile(),
+            media_type="video/mp4",
+            headers={"Content-Disposition": "attachment; filename=video.mp4"},
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# @app.get("/stream/tiktok")
+# async def stream_tiktok(url: str):
+#     buffer = io.BytesIO()
+
+#     ydl_opts = {
+#         "format": "mp4",
+#         "noplaylist": True,
+#         "outtmpl": "-",  # stream to stdout
+#     }
+
+#     def ydl_gen():
+#         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+#             ydl.download([url])  # stream into buffer
+#         buffer.seek(0)
+#         yield from buffer
+
+#     return StreamingResponse(ydl_gen(), media_type="video/mp4")
+
+@app.get("/files/{filename}")
+async def serve_file(filename: str):
+    """
+    Serve downloaded video files from server
+    """
+    file_path = os.path.join(DOWNLOAD_DIR, filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(file_path, media_type="video/mp4", filename=filename)
 
 app.get("/api/download")
 def download_file(
@@ -424,41 +602,6 @@ async def bulk_formats(
     tasks_progress[task_id]["results"] = results
     tasks_progress[task_id]["status"] = "completed"
     return {"task_id": task_id, "status": "completed", "results": results}
-
-@app.get("/proxy")
-async def proxy(
-    url: str = Query(..., description="Signed video URL"),
-    filename: str = Query("video.mp4", description="Optional filename")
-):
-    # 🔥 Use the same proxy yt-dlp used
-    proxy_url = PROXY_URL if PROXY_URL else None
-
-    # 🔥 Use proper headers
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/120.0.0.0 Safari/537.36"
-        ),
-        "Accept": "*/*",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Connection": "keep-alive",
-    }
-
-    async with httpx.AsyncClient(proxies=proxy_url, follow_redirects=True, timeout=None) as client:
-        r = await client.get(url, headers=headers)
-
-        if r.status_code != 200:
-            return {"status": "error", "message": f"Failed with {r.status_code}"}
-
-        # ✅ Stream file back to browser as real download
-        return StreamingResponse(
-            r.aiter_bytes(),
-            media_type=r.headers.get("content-type", "application/octet-stream"),
-            headers={
-                "Content-Disposition": f'attachment; filename="{filename}"'
-            },
-        )
 
 @app.get("/progress/{task_id}")
 def progress(
@@ -599,8 +742,8 @@ def supported_platforms(
 #                         "filesize": f.get("filesize") or f.get("filesize_approx"),
 #                         "url": f.get("url"),
 #                     }
-#                     if fmt["ext"] in ["mhtml", "webpage", "dash"]:
-#                         continue
+#                     # if fmt["ext"] in ["mhtml", "webpage", "dash"]:
+#                     #     continue
 #                     if vcodec != "none" and acodec != "none":
 #                         progressive.append(fmt)
 #                     elif vcodec != "none" and acodec == "none":
