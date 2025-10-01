@@ -7,7 +7,10 @@ const JWT_SECRET = process.env.JWT_SECRET!;
 export async function GET() {
   try {
     const token = jwt.sign(
-      { app: "video-downloader", iat: Date.now() }, // 👈 unique payload
+      {
+        app: "video-downloader", rnd: Math.random().toString(36).substring(2), // unique random value
+        iat: Math.floor(Date.now() / 1000),           // issue time
+      }, // 👈 unique payload
       JWT_SECRET,
       { expiresIn: "5m" }
     );
