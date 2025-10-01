@@ -1,4 +1,3 @@
-// app/api/refresh-token/route.ts
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
@@ -14,6 +13,7 @@ export async function GET() {
       JWT_SECRET,
       { expiresIn: "5m" }
     );
+    console.log(`Created new token ${token}`)
 
     return NextResponse.json(
       { token },
