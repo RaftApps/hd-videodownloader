@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
+
+export const dynamic = "force-dynamic"; // 👈 force runtime
+
 const JWT_SECRET = process.env.JWT_SECRET!;
 
 export async function GET() {
