@@ -21,7 +21,10 @@ import { MdVideoLibrary } from "react-icons/md"
 // ✅ helper: backend se fresh JWT fetch
 async function fetchClientToken(): Promise<string | null> {
   try {
-    const res = await fetch("/api/refresh-token")
+    const res = await fetch(`/api/refresh-token?ts=${Date.now()}`, {
+      cache: "no-store",
+      headers: { "Cache-Control": "no-store" },
+    });
     if (!res.ok) return null
     const data = await res.json()
     return data.token
