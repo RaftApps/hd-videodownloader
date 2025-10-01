@@ -27,6 +27,7 @@ async function fetchClientToken(): Promise<string | null> {
     });
     if (!res.ok) return null
     const data = await res.json()
+    console.log("🔑 New token:", data.token)
     return data.token
   } catch {
     return null
