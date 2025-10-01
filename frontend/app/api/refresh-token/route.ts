@@ -2,7 +2,6 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
-// ❌ secret ko kabhi NEXT_PUBLIC_ se expose mat karo
 const JWT_SECRET = process.env.JWT_SECRET!;
 
 export async function GET() {
@@ -10,10 +9,20 @@ export async function GET() {
     const token = jwt.sign(
       { app: "video-downloader" },
       JWT_SECRET,
-      { expiresIn: "5m" } // short expiry
+      { expiresIn: "5m" }
     );
 
-    return NextResponse.json({ token });
+    return NextResponse.json(
+      { token },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
+          "Surrogate-Control": "no-store",
+        },
+      }
+    );
   } catch (err) {
     console.error("Token generation error:", err);
     return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
