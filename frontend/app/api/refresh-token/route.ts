@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET!;
 export async function GET() {
   try {
     const token = jwt.sign(
-      { app: "video-downloader" },
+      { app: "video-downloader", iat: Date.now() }, // 👈 unique payload
       JWT_SECRET,
       { expiresIn: "5m" }
     );
