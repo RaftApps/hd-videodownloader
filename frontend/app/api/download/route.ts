@@ -31,19 +31,19 @@ export async function POST(req: Request) {
     // 1️⃣ validate JWT token
     const token = req.headers.get("x-client-token");
     if (!token) {
-      return NextResponse.json({ message: "Unauthorized: No token" }, { status: 401 });
+      return NextResponse.json({ message: "😔 Looks like your session has ended. Please refresh the page to continue your journey." }, { status: 401 });
     }
 
     try {
       jwt.verify(token, JWT_SECRET);
     } catch {
-      return NextResponse.json({ message: "Unauthorized: Invalid or expired token" }, { status: 401 });
+      return NextResponse.json({ message: "🔑 Your access has quietly expired… but don’t worry, a quick refresh will bring you back." }, { status: 401 });
     }
 
     // 2️⃣ validate origin
     const origin = req.headers.get("origin");
     if (!origin || origin !== ALLOWED_ORIGIN) {
-      return NextResponse.json({ message: "Forbidden: Origin not allowed" }, { status: 403 });
+      return NextResponse.json({ message: "🌍 Sorry, this request isn’t from a trusted place. Please try again from our main site." }, { status: 403 });
     }
 
     // 3️⃣ parse body
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     try {
       body = await req.json();
     } catch {
-      return NextResponse.json({ message: "Bad Request: Invalid JSON" }, { status: 400 });
+      return NextResponse.json({ message: "🤔 We couldn’t understand your request. Maybe try again, we’re listening." }, { status: 400 });
     }
 
     // 4️⃣ forward to FastAPI
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     try {
       apiData = await apiRes.json();
     } catch {
-      return NextResponse.json({ message: "FastAPI Error: Invalid response" }, { status: 502 });
+      return NextResponse.json({ message: "💤 Our servers are catching their breath right now. Please give it another try in a moment." }, { status: 502 });
     }
 
     return NextResponse.json(apiData, {
@@ -78,6 +78,6 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error("Proxy error:", err);
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ message: "💔 Something unexpected happened on our side. We’re already on it — please try again soon." }, { status: 500 });
   }
 }
