@@ -257,9 +257,8 @@ export function Hero() {
   )
 }
 
+/* ✅ Reusable Format Card */
 function FormatCard({ format }: { format: any }) {
-  const proxyUrl = `/api/proxy?url=${encodeURIComponent(format.url)}`;
-
   return (
     <div className="rounded-lg border p-4 shadow-sm flex flex-col justify-between">
       <div>
@@ -271,47 +270,15 @@ function FormatCard({ format }: { format: any }) {
           {format.filesize ? `${(format.filesize / (1024 * 1024)).toFixed(2)} MB` : "Unknown size"}
         </p>
       </div>
-
-      {/* Instead of direct open, use proxy */}
       <Button
         className="mt-3 inline-block text-center rounded-md bg-pink-600 px-3 py-1 text-white text-sm font-medium hover:bg-pink-700"
-        onClick={() => window.open(proxyUrl, "_blank")}
+        onClick={() => window.open(`${format.url}`, "_blank")}
       >
         Download
       </Button>
-
-      {/* ✅ In-app player option */}
-      <video controls className="mt-3 rounded-md w-full">
-        <source src={proxyUrl} type={`video/${format.ext}`} />
-        Your browser does not support the video tag.
-      </video>
     </div>
-  );
+  )
 }
-
-
-/* ✅ Reusable Format Card */
-// function FormatCard({ format }: { format: any }) {
-//   return (
-//     <div className="rounded-lg border p-4 shadow-sm flex flex-col justify-between">
-//       <div>
-//         <p className="font-medium">
-//           {format.resolution || format.audioQuality || "Unknown"} •{" "}
-//           {format.ext?.toUpperCase()}
-//         </p>
-//         <p className="text-xs text-gray-600">
-//           {format.filesize ? `${(format.filesize / (1024 * 1024)).toFixed(2)} MB` : "Unknown size"}
-//         </p>
-//       </div>
-//       <Button
-//         className="mt-3 inline-block text-center rounded-md bg-pink-600 px-3 py-1 text-white text-sm font-medium hover:bg-pink-700"
-//         onClick={() => window.open(`${format.url}`, "_blank")}
-//       >
-//         Download
-//       </Button>
-//     </div>
-//   )
-// }
 
 const supportedSites = [
   { name: "YouTube", icon: <FaYoutube /> },
